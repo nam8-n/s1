@@ -18,3 +18,7 @@ cd diag && python3 -m http.server 8000   # 브라우저: http://localhost:8000  
 ## 수리 문항은행 (4개 계열 × 4세트 × 15문항)
 - `items_math.js`(생성물), 생성·검증기 `tools/gen_math_nature.py`(`python3 tools/gen_math_nature.py`), 검토용 `docs/수리_*_60문항.(docx|md|csv)`
 - 1~10번(공통)은 전 계열 동일, 11~15번(응용)은 계열별. 세트당 기초 11·표준 3·변별 1. 학번 기준 A~D 세트 자동 배정.
+
+## 국어·영어 문항은행 (전 학과 공통, 과목당 4세트 × 15문항)
+- `items_lang.js`(생성물), 생성·검증기 `tools/gen_lang_bank.py`, 검토용 `docs/국어_공통_60문항.*`, `docs/영어_공통_60문항.*`
+- 세트당 독해 10(지문 2개×5문항) + 지시문 이해 5, 기초 11·표준 3·변별 1. 독해 지문 5문장 이내, 부정형 문제는 밑줄.
