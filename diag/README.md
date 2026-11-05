@@ -14,3 +14,7 @@ cd diag && python3 -m http.server 8000   # 브라우저: http://localhost:8000  
 - 관리자 PIN은 시범용 → 학교 계정(SSO) 연동 필요
 - 개인정보(학번·이름·성적) 수집·이용 동의 및 보관 기간 정책 필요
 - 문항 샘플 55개는 검수 전이며, 컷오프(50/80%)는 파일럿 후 확정
+
+## 수리 문항은행 (4개 계열 × 4세트 × 15문항)
+- `items_math.js`(생성물), 생성·검증기 `tools/gen_math_nature.py`(`python3 tools/gen_math_nature.py`), 검토용 `docs/수리_*_60문항.(docx|md|csv)`
+- 1~10번(공통)은 전 계열 동일, 11~15번(응용)은 계열별. 세트당 기초 11·표준 3·변별 1. 학번 기준 A~D 세트 자동 배정.

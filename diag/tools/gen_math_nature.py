@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""자연계열 수리 60문항(4세트×15) 생성·검증. 정답은 식으로 계산한다.
-출력: items_math_nature.js, docs/수리_자연계열_60문항.md (+CSV)"""
+"""수리 문항은행 생성·검증: 4개 계열 × 4세트(A~D) × 15문항 = 계열별 60문항.
+공통 10문항(1~10번)은 전 계열 동일, 응용 5문항(11~15번)은 계열별. 정답은 식으로 계산한다.
+출력: items_math.js, docs/수리_<계열>_60문항.(md|csv)"""
 import json, csv, sys, os
 OUT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def fmt(v, u=""):
     v = round(v, 6)
     s = f"{int(v):,}" if float(v).is_integer() else f"{v:,}".rstrip("0")
-    return s + (" " + u if u.isascii() and u.isalpha() else u)
+    return s + (" " + u if u and u[0].isascii() and u[0].isalpha() else u)
 
 def num(d, lv, q, val, unit, dis, ctx=None):
     opts = sorted(set([val] + dis))
@@ -99,59 +100,176 @@ forms["D"] = [
  num(A,H,"체중 18 kg인 아동의 하루 용량은 체중 1 kg당 25 mg이며, 이를 하루 2회 똑같이 나누어 투여합니다. 1회 투여량은 몇 mg입니까?",18*25/2,"mg",[12.5,50,450,900]),
 ]
 
-# ---- 검증 ----
+
+# =============== 계열별 응용 5문항 (11~15번) ===============
+apps = {"nature": {f: L[10:] for f, L in forms.items()}}
+commons = {f: L[:10] for f, L in forms.items()}
+
+apps["hotel"] = {
+ "A": [
+  num(A,B,"4인분 레시피에 밀가루 200 g이 필요합니다. 10인분에는 몇 g이 필요합니까?",200/4*10,"g",[400,450,600,800]),
+  num(A,B,"재료 원가가 3,000원이고 원가율을 30%로 하려면 판매가는 얼마입니까?",3000/0.3,"원",[6000,9000,12000,15000]),
+  num(A,B,"설탕과 물을 1 : 4의 비율로 섞어 시럽 500 g을 만들려면 설탕은 몇 g이 필요합니까?",500/5,"g",[50,125,200,400]),
+  num(A,S,"원가가 8,000원인 메뉴의 판매가가 20,000원입니다. 원가율은 몇 %입니까?",8000/20000*100,"%",[20,25,60,250]),
+  num(A,H,"6인분 레시피에 설탕 90 g이 필요합니다. 15인분을 만든 뒤, 1 kg짜리 설탕 한 봉지에서 남는 설탕은 몇 g입니까?",1000-90/6*15,"g",[225,675,750,910]),
+ ],
+ "B": [
+  num(A,B,"6인분 레시피에 감자 300 g이 필요합니다. 15인분에는 몇 g이 필요합니까?",300/6*15,"g",[450,600,900,1800]),
+  num(A,B,"재료 원가가 4,500원이고 원가율을 30%로 하려면 판매가는 얼마입니까?",4500/0.3,"원",[9000,13500,18000,22500]),
+  num(A,B,"식초와 물을 1 : 3의 비율로 섞어 식초물 800 mL를 만들려면 식초는 몇 mL가 필요합니까?",800/4,"mL",[100,160,400,600]),
+  num(A,S,"원가가 9,000원인 메뉴의 판매가가 30,000원입니다. 원가율은 몇 %입니까?",9000/30000*100,"%",[9,21,33,70]),
+  num(A,H,"12인분 레시피에 쌀 900 g이 필요합니다. 20인분을 만든 뒤, 5 kg짜리 쌀 포대에서 남는 쌀은 몇 g입니까?",5000-900/12*20,"g",[1500,2500,4100,4250]),
+ ],
+ "C": [
+  num(A,B,"8인분 레시피에 달걀 6개가 필요합니다. 12인분에는 달걀이 몇 개 필요합니까?",6/8*12,"개",[4,8,10,12]),
+  num(A,B,"판매가가 20,000원이고 원가율이 35%입니다. 원가는 얼마입니까?",20000*0.35,"원",[3500,5000,13000,15000]),
+  num(A,B,"커피와 우유를 2 : 3의 비율로 섞어 500 mL를 만들려면 커피는 몇 mL가 필요합니까?",500*2/5,"mL",[100,250,300,400]),
+  num(A,S,"음식값 30,000원에 부가세 10%가 별도로 붙습니다. 손님이 내야 할 금액은 얼마입니까?",30000*1.1,"원",[3000,30300,31000,60000]),
+  num(A,H,"10인분 육수에 물이 1.5 L 필요합니다. 25인분의 육수를 만들 때, 이미 물 1.25 L가 있다면 더 넣어야 할 물은 몇 L입니까?",1.5/10*25-1.25,"L",[1.25,3.75,5,6.25]),
+ ],
+ "D": [
+  num(A,B,"5인분 레시피에 소금 10 g이 필요합니다. 20인분에는 몇 g이 필요합니까?",10/5*20,"g",[20,30,50,200]),
+  num(A,B,"재료 원가가 6,000원이고 원가율을 25%로 하려면 판매가는 얼마입니까?",6000/0.25,"원",[1500,8000,18000,30000]),
+  num(A,B,"오렌지 원액과 물을 1 : 5의 비율로 섞어 1,200 mL를 만들려면 원액은 몇 mL가 필요합니까?",1200/6,"mL",[100,240,600,1000]),
+  num(A,S,"하루 매출이 500,000원이고 그중 재료비가 35%입니다. 재료비는 얼마입니까?",500000*0.35,"원",[17500,35000,325000,465000]),
+  num(A,H,"정가 20,000원인 메뉴를 20% 할인한 가격에 부가세 10%를 더해 받습니다. 받는 금액은 얼마입니까?",20000*0.8*1.1,"원",[16000,18000,22000,24000]),
+ ]}
+
+apps["eng"] = {
+ "A": [
+  num(A,B,"일정한 속력으로 3분에 120 m를 갑니다. 10분에는 몇 m를 갑니까?",120/3*10,"m",[300,360,1200,1600]),
+  num(A,B,"축척 1 : 50,000 지도에서 2 cm는 실제 거리로 몇 km입니까?",2*50000/100000,"km",[0.1,0.5,2,10]),
+  num(A,B,"V = IR 에서 I = 2 A, R = 6 Ω 일 때 V는 몇 V입니까?",2*6,"V",[3,4,8,18]),
+  num(A,S,"A와 B를 3 : 2의 비율로 섞어 모두 50 L를 만들려고 합니다. A는 몇 L입니까?",50*3/5,"L",[20,25,32,40]),
+  num(A,H,"저항 8 Ω에 24 V의 전압을 걸었습니다. 이 전류(V = IR)가 5초 동안 흐를 때 전하량 Q = It 는 몇 C입니까?",24/8*5,"C",[3,8,120,192]),
+ ],
+ "B": [
+  num(A,B,"자동차가 2시간에 150 km를 일정한 속력으로 갑니다. 5시간에는 몇 km를 갑니까?",150/2*5,"km",[300,350,450,750]),
+  num(A,B,"축척 1 : 20,000 지도에서 3 cm는 실제 거리로 몇 m입니까?",3*20000/100,"m",[60,300,1200,6000]),
+  num(A,B,"V = IR 에서 V = 12 V, R = 4 Ω 일 때 I는 몇 A입니까?",12/4,"A",[2,4,8,48]),
+  num(A,S,"시멘트와 모래를 2 : 5의 비율로 섞어 모두 70 kg을 만들려고 합니다. 시멘트는 몇 kg입니까?",70*2/7,"kg",[14,28,35,50]),
+  num(A,H,"전력 P = VI 입니다. 100 V, 5 A로 작동하는 기기를 2시간 사용했습니다. 사용한 전력량은 몇 kWh입니까?",100*5*2/1000,"kWh",[0.25,0.5,5,10]),
+ ],
+ "C": [
+  num(A,B,"펌프가 4분에 60 L의 물을 일정하게 퍼 올립니다. 10분에는 몇 L를 퍼 올립니까?",60/4*10,"L",[100,120,240,600]),
+  num(A,B,"축척 1 : 25,000 지도에서 4 cm는 실제 거리로 몇 km입니까?",4*25000/100000,"km",[0.1,0.4,4,10]),
+  num(A,B,"V = IR 에서 I = 0.5 A, R = 20 Ω 일 때 V는 몇 V입니까?",0.5*20,"V",[0.025,2.5,20.5,40]),
+  num(A,S,"물과 페인트를 1 : 4의 비율로 섞어 모두 15 L를 만들려고 합니다. 페인트는 몇 L입니까?",15*4/5,"L",[3,4,10,15]),
+  num(A,H,"가로 120 cm, 세로 80 cm인 철판을 축척 1 : 20으로 도면에 그렸습니다. 도면 속 철판의 넓이는 몇 cm²입니까?",120/20*80/20,"cm²",[10,48,96,9600]),
+ ],
+ "D": [
+  num(A,B,"기계가 5분에 80개의 부품을 일정하게 만듭니다. 12분에는 몇 개를 만듭니까?",80/5*12,"개",[160,180,200,400]),
+  num(A,B,"축척 1 : 100,000 지도에서 3 cm는 실제 거리로 몇 km입니까?",3*100000/100000,"km",[0.3,1,30,300]),
+  num(A,B,"V = IR 에서 V = 30 V, R = 15 Ω 일 때 I는 몇 A입니까?",30/15,"A",[0.5,15,45,450]),
+  num(A,S,"철과 구리를 7 : 3의 비율로 섞어 모두 200 kg을 만들려고 합니다. 철은 몇 kg입니까?",200*7/10,"kg",[60,70,100,150]),
+  num(A,H,"전열기에서 소비되는 전력은 P = I²R 입니다. I = 3 A, R = 4 Ω 일 때 P는 몇 W입니까?",3**2*4,"W",[12,24,48,144]),
+ ]}
+
+apps["soc"] = {
+ "A": [
+  num(A,B,"1달러가 1,300원일 때 200달러는 몇 원입니까?",200*1300,"원",[6500,26000,65000,2600000]),
+  txt(A,B,"런던은 한국보다 9시간 늦습니다. 한국이 오후 3시일 때 런던은 몇 시입니까?",["오전 6시","오전 9시","낮 12시","오후 6시","오후 9시"],"오전 6시"),
+  num(A,B,"환전 수수료율이 3%입니다. 100,000원을 환전할 때 수수료는 얼마입니까?",100000*0.03,"원",[300,1000,30000,300000]),
+  txt(A,S,"오전 9시에 출발하여 2시간 30분을 비행했습니다(같은 시간대). 도착 시각은 언제입니까?",["오전 11시","오전 11시 30분","낮 12시","낮 12시 30분","오후 1시"],"오전 11시 30분"),
+  num(A,H,"1유로가 1,400원이고 환전 수수료는 원화 금액의 2%가 추가됩니다. 100유로를 사려면 얼마를 내야 합니까?",100*1400*1.02,"원",[140000,142000,144000,168000]),
+ ],
+ "B": [
+  num(A,B,"1유로가 1,400원일 때 50유로는 몇 원입니까?",50*1400,"원",[2800,7000,28000,700000]),
+  txt(A,B,"방콕은 한국보다 2시간 늦습니다. 한국이 오후 4시일 때 방콕은 몇 시입니까?",["오전 10시","오후 1시","오후 2시","오후 4시","오후 6시"],"오후 2시"),
+  num(A,B,"환전 수수료율이 2%입니다. 250,000원을 환전할 때 수수료는 얼마입니까?",250000*0.02,"원",[500,2500,12500,50000]),
+  num(A,S,"정가 50,000원인 상품을 30% 할인하면 얼마입니까?",50000*0.7,"원",[15000,20000,45000,65000]),
+  txt(A,H,"한국 시각 오전 10시에 출발하여 3시간 30분 비행했습니다. 도착지는 한국보다 2시간 빠릅니다. 도착지의 현지 도착 시각은 언제입니까?",["오후 1시 30분","오후 2시","오후 3시 30분","오후 5시","오후 5시 30분"],"오후 3시 30분"),
+ ],
+ "C": [
+  num(A,B,"1파운드가 1,700원일 때 30파운드는 몇 원입니까?",30*1700,"원",[5100,17000,34000,510000]),
+  txt(A,B,"파리는 한국보다 8시간 늦습니다. 한국이 오후 11시일 때 파리는 몇 시입니까?",["오전 3시","오전 7시","오후 3시","오후 7시","오후 11시"],"오후 3시"),
+  num(A,B,"환전 수수료율이 1.5%입니다. 200,000원을 환전할 때 수수료는 얼마입니까?",200000*0.015,"원",[300,1500,30000,300000]),
+  num(A,S,"정가 80,000원인 상품을 25% 할인하면 얼마입니까?",80000*0.75,"원",[20000,55000,75000,100000]),
+  txt(A,H,"한국 시각 오후 2시에 출발하여 10시간 비행했습니다. 도착지는 한국보다 7시간 늦습니다. 출발한 날을 기준으로 도착지의 현지 도착 시각은 몇 시입니까?",["오전 7시","오후 2시","오후 5시","오후 7시","오후 10시"],"오후 5시"),
+ ],
+ "D": [
+  num(A,B,"100엔이 900원일 때 5,000엔은 몇 원입니까?",5000*9,"원",[4500,9000,50000,450000]),
+  txt(A,B,"두바이는 한국보다 5시간 늦습니다. 한국이 오후 9시일 때 두바이는 몇 시입니까?",["오전 2시","오후 2시","오후 4시","오후 6시","오후 9시"],"오후 4시"),
+  num(A,B,"환전 수수료율이 4%입니다. 50,000원을 환전할 때 수수료는 얼마입니까?",50000*0.04,"원",[200,1000,20000,200000]),
+  num(A,S,"정가 40,000원인 상품을 15% 할인하면 얼마입니까?",40000*0.85,"원",[6000,25000,36000,46000]),
+  txt(A,H,"한국 시각 오전 8시에 출발하여 4시간 45분 비행했습니다. 도착지는 한국보다 1시간 늦습니다. 도착지의 현지 도착 시각은 언제입니까?",["오전 11시 45분","낮 12시","낮 12시 45분","오후 1시 45분","오후 2시 45분"],"오전 11시 45분"),
+ ]}
+
+TRACKS = {"nature":("자연계열(간호·물리치료·작업치료·치위생)","MN"),
+          "hotel":("자연계열(호텔외식)","MH"),
+          "eng":("공학계열","ME"),
+          "soc":("인문사회계열(항공서비스경영)","MS")}
 from collections import Counter
-for f, L in forms.items():
-    assert len(L) == 15
-    assert Counter(i["lv"] for i in L) == {B: 11, S: 3, H: 1}, f
-    c = Counter(i["d"] for i in L)
-    assert c == {U: 3, R: 3, E: 2, G: 2, A: 5}, (f, c)
-    for i in L:
-        assert len(set(i["o"])) == 5
-        assert i["o"][i["a"]] == i["key"]
-qs = [i["q"] for L in forms.values() for i in L]
-assert len(qs) == 60
-
-# ---- 정답 위치 균등화(숫자형 보기는 시드 고정 무작위 배치, 표 읽기 문항은 표 순서 유지) ----
 import random
-rng = random.Random(2027)
-allitems = [i for L in forms.values() for i in L]
-fixed = [i for i in allitems if i["d"] == G and i["c"] and i["a"] is not None and i["o"][0] in ("월요일","1학년","3월","가반")]
-free = [i for i in allitems if i not in fixed]
-need = [12 - sum(1 for x in fixed if x["a"] == k) for k in range(5)]
-targets = [k for k in range(5) for _ in range(need[k])]
-rng.shuffle(targets)
-assert len(targets) == len(free)
-for i, t in zip(free, targets):
-    others = [o for k, o in enumerate(i["o"]) if k != i["a"]]
-    rng.shuffle(others)
-    others.insert(t, i["key"])
-    i["o"], i["a"] = others, t
-for i in allitems:
-    assert i["o"][i["a"]] == i["key"] and len(set(i["o"])) == 5
+for k in TRACKS:
+    for f in "ABCD":
+        assert len(apps[k][f]) == 5, (k, f)
 
-bank = []
-for f, L in forms.items():
-    for n, i in enumerate(L, 1):
-        bank.append(dict(id=f"MN-{f}{n:02d}", form=f, no=n, d=i["d"], lv=i["lv"], c=i["c"], q=i["q"], o=i["o"], a=i["a"]))
-with open(f"{OUT}/items_math_nature.js", "w", encoding="utf-8") as fp:
-    fp.write("// 자연계열 수리 60문항(4세트×15). tools/gen_math_nature.py로 생성·검증됨 — 직접 수정하지 말고 생성기를 수정하세요.\n")
-    fp.write("window.MATH_NATURE=" + json.dumps(bank, ensure_ascii=False, indent=1) + ";\n")
-with open(f"{OUT}/docs/수리_자연계열_60문항.csv", "w", encoding="utf-8-sig", newline="") as fp:
-    w = csv.writer(fp); w.writerow(["문항ID","세트","번호","영역","난이도","자료","문제","①","②","③","④","⑤","정답"])
-    for b in bank: w.writerow([b["id"],b["form"],b["no"],b["d"],b["lv"],(b["c"] or "").replace("\n"," / "),b["q"],*b["o"],"①②③④⑤"[b["a"]]])
-with open(f"{OUT}/docs/수리_자연계열_60문항.md", "w", encoding="utf-8") as fp:
-    fp.write("# 자연계열 수리 진단 문항 (60문항 · 4세트)\n\n대상: 간호·물리치료·작업치료·치위생. 세트당 15문항(공통 10 + 응용 5), 난이도 기초 11 + 표준 3 + 변별 1, 중2~3 수준, 계산기 미사용, 20분. ※ 검수 전 초안입니다.\n\n")
-    fp.write("## 세트 구성 기준\n\n| 번호 | 영역 | 난이도 |\n|---|---|---|\n")
-    for n, i in enumerate(forms["A"], 1): fp.write(f"| {n} | {i['d']} | {i['lv']} |\n")
-    for f, L in forms.items():
-        fp.write(f"\n## 세트 {f}\n\n")
+# ---- 정답 위치 균등화: 공통 40문항(계열 공유) → 위치별 8개씩, 계열별 응용 20문항 → 위치별 4개씩 ----
+rng = random.Random(2027)
+def place(items, per_pos):
+    """items 중 보기 순서가 고정된 표 읽기 문항은 제외하고, 목표 정답 위치(per_pos 개수)를 무작위 배정"""
+    fixed = [i for i in items if i["d"] == G and i["c"] and i["o"][0] in ("월요일","1학년","3월","가반")]
+    free = [i for i in items if i not in fixed]
+    need = [per_pos - sum(1 for x in fixed if x["a"] == k) for k in range(5)]
+    targets = [k for k in range(5) for _ in range(need[k])]
+    assert len(targets) == len(free), (len(targets), len(free))
+    rng.shuffle(targets)
+    for i, t in zip(free, targets):
+        others = [o for kk, o in enumerate(i["o"]) if kk != i["a"]]
+        rng.shuffle(others); others.insert(t, i["key"]); i["o"], i["a"] = others, t
+place([i for f in "ABCD" for i in commons[f]], 8)
+for k in TRACKS:
+    place([i for f in "ABCD" for i in apps[k][f]], 4)
+
+# ---- 검증 ----
+bank = {}
+for k, (kname, pre) in TRACKS.items():
+    bank[k] = []
+    qs = []
+    for f in "ABCD":
+        L = commons[f] + apps[k][f]
+        assert Counter(i["lv"] for i in L) == {B: 11, S: 3, H: 1}, (k, f)
+        assert Counter(i["d"] for i in L) == {U: 3, R: 3, E: 2, G: 2, A: 5}, (k, f)
         for n, i in enumerate(L, 1):
-            fp.write(f"**{n}.** [{i['d']}·{i['lv']}] {i['q']}\n\n")
-            if i["c"]: fp.write("> " + i["c"].replace("\n", "  \n> ") + "\n\n")
-            fp.write("  ".join(f"{'①②③④⑤'[k]} {o}" for k, o in enumerate(i["o"])) + "\n\n")
-    fp.write("\n## 정답표\n\n| 세트 | " + " | ".join(str(n) for n in range(1,16)) + " |\n|---|" + "---|"*15 + "\n")
-    for f, L in forms.items(): fp.write(f"| {f} | " + " | ".join("①②③④⑤"[i["a"]] for i in L) + " |\n")
-    fp.write("\n## 해설 요약(응용)\n\n- 용량 = 체중 × 체중당 용량 / 정수 = 처방량 ÷ 1정 함량 / 주입 속도 = 총량 ÷ 시간 / 용질 = 용액량 × 농도 / 하루 용량 ÷ 횟수 = 1회 용량\n")
-dist = Counter(b["a"] for b in bank)
-print("OK 60문항, 정답 위치 분포:", {"①②③④⑤"[k]: dist[k] for k in range(5)})
+            assert len(set(i["o"])) == 5 and i["o"][i["a"]] == i["key"], (k, f, n)
+            qs.append(i["q"])
+            bank[k].append(dict(id=f"{pre}-{f}{n:02d}", form=f, no=n, d=i["d"], lv=i["lv"], c=i["c"], q=i["q"], o=i["o"], a=i["a"]))
+    assert len(bank[k]) == 60
+    assert len(set(qs)) == 60, "중복 문항: " + str([q for q, c in Counter(qs).items() if c > 1])
+    dist = Counter(b["a"] for b in bank[k])
+    assert all(dist[x] == 12 for x in range(5)), dist
+# 공통 문항은 계열 간 동일해야 함
+for f in "ABCD":
+    ref = [(b["q"], b["o"], b["a"]) for b in bank["nature"] if b["form"] == f and b["no"] <= 10]
+    for k in TRACKS:
+        assert ref == [(b["q"], b["o"], b["a"]) for b in bank[k] if b["form"] == f and b["no"] <= 10]
+
+with open(f"{OUT}/items_math.js", "w", encoding="utf-8") as fp:
+    fp.write("// 수리 문항은행(4개 계열×4세트×15문항). tools/gen_math_nature.py로 생성·검증됨 — 직접 수정하지 말고 생성기를 수정하세요.\n")
+    fp.write("window.MATH_BANK=" + json.dumps(bank, ensure_ascii=False, indent=1) + ";\n")
+os.makedirs(f"{OUT}/docs", exist_ok=True)
+for k, (kname, pre) in TRACKS.items():
+    L = bank[k]
+    fname = {"nature":"자연계열(간호보건)","hotel":"호텔외식","eng":"공학계열","soc":"인문사회계열"}[k]
+    with open(f"{OUT}/docs/수리_{fname}_60문항.csv", "w", encoding="utf-8-sig", newline="") as fp:
+        w = csv.writer(fp); w.writerow(["문항ID","세트","번호","영역","난이도","자료","문제","①","②","③","④","⑤","정답"])
+        for b in L: w.writerow([b["id"],b["form"],b["no"],b["d"],b["lv"],(b["c"] or "").replace("\n"," / "),b["q"],*b["o"],"①②③④⑤"[b["a"]]])
+    with open(f"{OUT}/docs/수리_{fname}_60문항.md", "w", encoding="utf-8") as fp:
+        fp.write(f"# {kname} 수리 진단 문항 (60문항 · 4세트)\n\n세트당 15문항(공통 10 + 응용 5), 난이도 기초 11 + 표준 3 + 변별 1, 중2~3 수준, 계산기 미사용, 20분. 1~10번은 전 계열 공통, 11~15번은 {kname} 응용. ※ 검수 전 초안입니다.\n\n")
+        fp.write("## 세트 구성 기준\n\n| 번호 | 영역 | 난이도 |\n|---|---|---|\n")
+        for b in [x for x in L if x["form"] == "A"]: fp.write(f"| {b['no']} | {b['d']} | {b['lv']} |\n")
+        for f in "ABCD":
+            fp.write(f"\n## 세트 {f}\n\n")
+            for b in [x for x in L if x["form"] == f]:
+                fp.write(f"**{b['no']}.** [{b['d']}·{b['lv']}] {b['q']}\n\n")
+                if b["c"]: fp.write("> " + b["c"].replace("\n", "  \n> ") + "\n\n")
+                fp.write("  ".join(f"{'①②③④⑤'[j]} {o}" for j, o in enumerate(b["o"])) + "\n\n")
+        fp.write("\n## 정답표\n\n| 세트 | " + " | ".join(str(n) for n in range(1,16)) + " |\n|---|" + "---|"*15 + "\n")
+        for f in "ABCD": fp.write(f"| {f} | " + " | ".join("①②③④⑤"[b["a"]] for b in L if b["form"] == f) + " |\n")
+        fp.write("\n## 응용 문항 해설 요약\n\n" + {
+          "nature":"- 정수 = 처방량 ÷ 1정 함량 / 용량 = 체중 × 체중당 용량 / 주입 속도 = 총량 ÷ 시간 / 용질 = 용액량 × 농도 / 하루 용량 ÷ 횟수 = 1회 용량\n",
+          "hotel":"- 인원수 조정은 1인분 양 × 인원 / 판매가 = 원가 ÷ 원가율 / 원가율 = 원가 ÷ 판매가 × 100 / 혼합 비율은 전체 × 비율 ÷ 비율의 합 / 할인·부가세는 곱셈으로 순서대로\n",
+          "eng":"- 비례식(속력·생산량) / 축척: 지도 거리 × 축척 분모 → cm를 m·km로 환산 / V = IR, Q = It, P = VI, P = I²R 대입 / 혼합 비율 = 전체 × 비율 ÷ 비율의 합\n",
+          "soc":"- 환산 금액 = 외화 × 환율 / 수수료 = 금액 × 수수료율 / 시차는 한국 시각에서 더하거나 빼고 날짜 변화 확인 / 도착 시각 = 출발 시각 + 비행시간 ± 시차\n"}[k])
+        print(k, "OK 60문항, 정답 위치:", {"①②③④⑤"[x]: sum(1 for b in L if b["a"]==x) for x in range(5)})
