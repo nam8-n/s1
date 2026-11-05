@@ -13,6 +13,10 @@ function items(subj,track){
     }
     return ITEMS.math_common.concat(ITEMS.math_app[track]);
   }
+  if(window.LANG_BANK&&LANG_BANK[subj]){                 // 국어·영어: 전 학과 공통 60문항 은행에서 학번 기준 A~D 세트 배정
+    let h=0;for(const ch of me.sid)h=(h*31+ch.charCodeAt(0))>>>0;
+    const f='ABCD'[h%4];return LANG_BANK[subj].filter(x=>x.form===f).map(x=>({d:x.d,c:x.c,q:x.q,o:x.o,a:x.a}));
+  }
   return ITEMS[subj];
 }
 function render(){
@@ -45,7 +49,7 @@ function exam(subj){
   const track=C.depts[me.dept],list=items(subj,track);let left=C.minutesPerSubject*60;const t0=Date.now();
   bar.classList.remove('hide');$('#bt').textContent=SUBJECTS[subj]+' 영역';
   const tick=()=>{const m=Math.floor(left/60),s=left%60;$('#bp').textContent=`남은 시간 ${m}:${String(s).padStart(2,'0')}`;if(left--<=0){clearInterval(timer);finish(true)}};
-  app.innerHTML=`<div class="card">${list.map((it,i)=>`<div class="q"><b>${i+1}. </b>${it.c?`<div class="ctx">${esc(it.c)}</div>`:''}${it.q}
+  app.innerHTML=`<div class="card">${list.map((it,i)=>`<div class="q"><b>${i+1}. </b>${it.c?(i>0&&list[i-1].c===it.c?'<div class="mut">(위 글을 읽고 답하시오)</div>':`<div class="ctx">${esc(it.c)}</div>`):''}${it.q}
    ${it.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${i}" value="${j}">${'①②③④⑤'[j]} ${esc(o)}</label>`).join('')}</div>`).join('')}
    <button id="sub">제출하기</button></div>`;
   $('#sub').onclick=()=>finish(false);tick();timer=setInterval(tick,1000);
