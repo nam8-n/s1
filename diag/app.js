@@ -7,9 +7,9 @@ const save=a=>{try{localStorage.setItem(KEY,JSON.stringify(a))}catch(e){}};
 let timer=null,me=null;
 function items(subj,track){
   if(subj==='math'){
-    if(track==='nature'&&window.MATH_NATURE){            // 자연계열: 60문항 은행에서 학번 기준 A~D 세트 배정
+    if(window.MATH_BANK&&MATH_BANK[track]){              // 계열별 60문항 은행에서 학번 기준 A~D 세트 배정
       let h=0;for(const ch of me.sid)h=(h*31+ch.charCodeAt(0))>>>0;
-      const f='ABCD'[h%4];return MATH_NATURE.filter(x=>x.form===f).map(x=>({d:x.d,c:x.c,q:x.q,o:x.o,a:x.a}));
+      const f='ABCD'[h%4];return MATH_BANK[track].filter(x=>x.form===f).map(x=>({d:x.d,c:x.c,q:x.q,o:x.o,a:x.a}));
     }
     return ITEMS.math_common.concat(ITEMS.math_app[track]);
   }
