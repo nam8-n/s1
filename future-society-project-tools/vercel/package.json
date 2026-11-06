@@ -1,0 +1,12 @@
+{
+  "name": "future-society-project-tools",
+  "private": true,
+  "type": "module",
+  "description": "미래사회와 문제해결능력 팀 프로젝트 채점기·학습 도우미 (Vercel 서버리스 버전)",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node --env-file=.env scripts/dev.mjs",
+    "test": "node scripts/test.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

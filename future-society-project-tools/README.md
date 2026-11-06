@@ -6,9 +6,10 @@
 |---|---|
 | `grader/` | 팀별 PPTX·PDF 발표자료를 읽어 루브릭 5개 영역의 등급·근거·피드백을 제안하고 엑셀로 내보내는 채점 도구(교수용) |
 | `chatbot/` | 학생이 SCAMPER·5Why·로직트리·악마의 주장법 적용 방법을 질문하면 안내하는 학습 도우미(학생용) |
+| `vercel/` | 두 앱을 Vercel에 배포하는 서버리스 버전(서버 함수가 AI를 호출). 배포 방법은 `vercel/README.md` |
 
 ## 실행 환경
-- 두 앱은 claude.ai Artifact 런타임(`window.claude`의 `sample`, `downloads` 기능)을 사용하도록 작성되어 있습니다. 일반 웹서버에서 열면 AI 호출과 파일 저장은 동작하지 않습니다.
+- 두 앱은 claude.ai Artifact 런타임(`window.claude`의 `sample`, `downloads` 기능)을 사용하도록 작성되어 있습니다. 일반 웹서버에서 그대로 열면 AI 호출과 파일 저장은 동작하지 않습니다(웹사이트로 배포하려면 `vercel/` 버전을 쓰세요).
 - 외부 라이브러리는 CDN에서 불러옵니다: pdf.js 3.11.174, JSZip 3.10.1, SheetJS 0.18.5(채점 도구만).
 - 채점 결과와 대화 기록은 브라우저 localStorage에만 저장됩니다.
 

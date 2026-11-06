@@ -1,0 +1,562 @@
+<title>프로젝트 루브릭 채점기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+<style>
+/* Layout: 한 열 작업대. 위에서 아래로 (루브릭 → 팀 파일 올리기 → 팀별 채점 카드 → 성적표 내보내기) */
+:root{
+  --bg:#f2f4f6; --panel:#ffffff; --ink:#15212c; --muted:#5b6874; --line:#d8dee4; --soft:#eaeef2;
+  --accent:#1b5e8c; --accent-ink:#ffffff; --accent-soft:#dcebf5;
+  --good:#1d7a4a; --good-soft:#dff2e8; --mid:#8a6a12; --mid-soft:#f6edcf; --bad:#b3261e; --bad-soft:#f9e1de;
+  --font-body:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --font-head:'Noto Serif KR','Batang',serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e141a; --panel:#16202a; --ink:#e5ebf0; --muted:#97a5b2; --line:#2b3947; --soft:#1e2b37;
+  --accent:#6fb4e3; --accent-ink:#08202f; --accent-soft:#17364b;
+  --good:#6fd09a; --good-soft:#143324; --mid:#e0c067; --mid-soft:#3a3115; --bad:#f08f87; --bad-soft:#412120; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e141a; --panel:#16202a; --ink:#e5ebf0; --muted:#97a5b2; --line:#2b3947; --soft:#1e2b37;
+  --accent:#6fb4e3; --accent-ink:#08202f; --accent-soft:#17364b;
+  --good:#6fd09a; --good-soft:#143324; --mid:#e0c067; --mid-soft:#3a3115; --bad:#f08f87; --bad-soft:#412120; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.6;
+  padding-block:24px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--font-head);margin:0;text-wrap:balance;line-height:1.35}
+h1{font-size:26px}
+h2{font-size:18px}
+h3{font-size:16px}
+.sub{color:var(--muted);margin:6px 0 0;max-width:68ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+.panel>header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.label{font-size:12px;letter-spacing:.04em;color:var(--muted);font-weight:500}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 12px;min-height:36px}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+button.ghost{background:transparent}
+button.danger:hover{border-color:var(--bad);color:var(--bad)}
+button:disabled{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=text],input[type=number],select,textarea{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 9px;min-height:36px;width:100%}
+textarea{resize:vertical;line-height:1.5}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th,td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+th{background:var(--soft);font-weight:500;font-size:13px}
+th[scope=row]{min-width:96px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rubric td textarea{min-height:92px;font-size:12.5px}
+.rubric td input{width:70px}
+.dropzone{border:2px dashed var(--line);border-radius:10px;padding:22px;text-align:center;color:var(--muted);transition:border-color .15s,background .15s}
+.dropzone.over{border-color:var(--accent);background:var(--accent-soft)}
+.dropzone b{color:var(--ink)}
+.chip{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;font-weight:500;border:1px solid transparent;white-space:nowrap}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.chip.mid{background:var(--mid-soft);color:var(--mid)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.neutral{background:var(--soft);color:var(--muted)}
+.team{display:flex;flex-direction:column;gap:14px}
+.team-top{display:grid;grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.team-top{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.meta{color:var(--muted);font-size:12.5px;overflow-wrap:anywhere}
+.status{font-size:13px;color:var(--muted)}
+.status.err{color:var(--bad)}
+.score-head{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+.big{font-family:var(--font-head);font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.bar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;flex:1;min-width:120px}
+.bar>i{display:block;height:100%;background:var(--accent)}
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+.check{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.check .note{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.ev{margin:0;padding-left:16px;color:var(--muted);font-size:12.5px}
+.ev li{overflow-wrap:anywhere}
+.fb{margin:6px 0 0;overflow-wrap:anywhere}
+.comment{background:var(--soft);border-radius:8px;padding:10px 12px;overflow-wrap:anywhere}
+.warn{background:var(--mid-soft);color:var(--mid);border-radius:8px;padding:8px 12px;font-size:13px}
+.empty{color:var(--muted);text-align:center;padding:26px 12px}
+.notice{font-size:12.5px;color:var(--muted);max-width:80ch}
+details>summary{cursor:pointer;font-weight:500}
+.manual summary{font-family:var(--font-head);font-size:18px;font-weight:600}
+.manual .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:12px}
+.manual h3{font-size:15px;margin-bottom:6px}
+.manual ol,.manual ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;z-index:20;max-width:90vw}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>팀 프로젝트 루브릭 채점기</h1>
+    <p class="sub">미래사회와 문제해결능력 · 미래사회 문제 해결 프로젝트(20점). 강의계획서 루브릭 5개 영역으로 PPT·PDF 발표자료를 읽고 등급과 근거를 제안합니다. AI 결과는 참고용 초안이며, 등급은 교수님이 직접 바꿀 수 있습니다.</p>
+  </header>
+
+  <section class="panel manual" id="manual">
+    <details>
+      <summary>사용 설명서 (처음 사용하시면 먼저 읽어 보세요)</summary>
+      <div class="cols">
+        <div>
+          <h3>기본 사용 순서</h3>
+          <ol>
+            <li><b>자료 올리기</b>: "팀 과제 올리기"에서 팀별 PPTX 또는 PDF를 올립니다. 여러 파일을 한꺼번에 올려도 됩니다. 팀 이름은 파일명에서 자동으로 채워지며 고칠 수 있습니다.</li>
+            <li><b>입력칸 채우기</b>: 기여도 평가서 점수를 "⑤ 참여도·협업"에 넣습니다(0~4점). 실제 발표 점수가 있으면 "④ 실제 발표 점수"에 넣고, 없으면 비워 둡니다.</li>
+            <li><b>채점</b>: 팀 카드의 "채점" 또는 위쪽 "전체 채점"을 누릅니다. 처음 누르면 Claude 사용 허용 창이 뜹니다. 팀당 30초~2분 걸립니다.</li>
+            <li><b>결과 확인과 수정</b>: 영역별 등급, 자료에서 인용한 근거, 개선 피드백, 필수 요소 점검표를 읽고, 동의하지 않는 영역은 등급 드롭다운으로 바꿉니다. 합계가 바로 다시 계산됩니다.</li>
+            <li><b>내보내기</b>: "엑셀로 내보내기"를 누르면 요약, 영역별 상세, 필수요소 점검 3개 시트가 저장됩니다.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>화면 읽는 법</h3>
+          <ul>
+            <li><b>등급</b>: 매우 우수 / 우수 / 보통 / 미흡 / 매우 미흡 중 하나이며, 강의계획서 루브릭 문구 기준입니다. 점수는 "채점 기준"의 비율(기본 100·80·60·40·20%)로 계산됩니다.</li>
+            <li><b>슬라이드 기반 추정</b>: ④ 발표력은 영상이 없어서 슬라이드 구성만 보고 추정한 값입니다. 실제 발표를 본 뒤 점수를 직접 넣는 것을 권합니다.</li>
+            <li><b>재작성 검토</b>: 20점 중 12점 미만(60% 미만)에 붙는 참고 표시입니다.</li>
+            <li><b>AI 판단 신뢰도 / 확인 필요</b>: 글자를 못 읽은 쪽이 있거나 자료가 부족하면 낮게 표시되고 이유가 적힙니다. 그런 팀은 원본을 직접 확인하세요.</li>
+            <li><b>필수 포함 요소</b>: 5Why, 로직트리, SCAMPER 등 2가지 이상, 악마의 주장법, 최종 실행안의 충족·부분·없음 여부입니다.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>채점 기준 바꾸기</h3>
+          <ul>
+            <li>"채점 기준" 패널의 "기준 열기·수정"에서 등급별 점수 비율, 루브릭 문구, AI에게 주는 추가 지침을 고칠 수 있습니다.</li>
+            <li>점수 비율을 바꾸면 이미 채점한 팀의 점수도 새 비율로 다시 계산됩니다. 문구와 지침은 다음 채점부터 AI에 반영됩니다.</li>
+            <li>"기본값 복원"을 누르면 강의계획서 원문 기준으로 돌아갑니다.</li>
+            <li>"채점 방식"의 "정밀"은 더 오래 생각해서 느리지만 판단이 신중합니다. 보통은 "표준"을 쓰세요.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>문제가 생겼을 때</h3>
+          <ul>
+            <li><b>"파일을 읽지 못했습니다"</b>: .ppt는 .pptx로 저장하거나 PDF로 내보내 다시 올리세요.</li>
+            <li><b>글자가 안 읽히는 슬라이드</b>: 그림만 있는 PPTX 슬라이드는 읽지 못합니다. PDF로 저장해 올리면 이미지로 읽습니다.</li>
+            <li><b>허용 창이 안 뜨거나 거절했을 때</b>: 페이지를 새로 고친 뒤 다시 채점하세요.</li>
+            <li><b>"요청이 많거나 사용 한도"</b>: 잠시 기다린 뒤 해당 팀만 "다시 채점"하세요. 팀이 많으면 나누어 채점하세요.</li>
+            <li><b>같은 자료를 다시 채점하면</b>: 5분 안에는 저장된 결과가 그대로 나옵니다.</li>
+            <li><b>채점 중지</b>: 채점 중인 카드의 "채점 중지"를 누릅니다.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>개인정보와 저장</h3>
+          <ul>
+            <li>8자리 학번은 AI에 보내기 전에 지웁니다. 이미지로 읽는 쪽은 원본 그대로 전송됩니다.</li>
+            <li>팀 목록과 결과는 이 브라우저에만 저장됩니다. 다른 기기에서는 보이지 않으니 끝나면 엑셀로 내보내 보관하세요.</li>
+            <li>채점 호출은 지금 로그인한 본인 Claude 계정의 사용량을 씁니다.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>꼭 기억할 점</h3>
+          <ul>
+            <li>AI 채점은 참고용 초안입니다. 최종 점수는 교수님이 자료를 보고 확정하세요.</li>
+            <li>팀 간 비교를 위해 같은 채점 방식과 같은 기준으로 모든 팀을 채점하세요.</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel" id="rubricPanel">
+    <header>
+      <div><h2>채점 기준</h2><div class="meta">강의계획서 3쪽의 보고서 루브릭입니다. 문구와 등급별 점수 비율은 수정할 수 있습니다.</div></div>
+      <div class="row"><button id="rubricToggle" class="ghost" aria-expanded="false">기준 열기·수정</button></div>
+    </header>
+    <div id="rubricSummary" class="row"></div>
+    <div id="rubricBody" hidden>
+      <div class="row" style="margin:14px 0 8px">
+        <span class="label">등급별 점수 비율(%)</span>
+        <span id="pctInputs" class="row"></span>
+        <button id="rubricReset" class="ghost">기본값 복원</button>
+      </div>
+      <div class="scroll"><table class="rubric" id="rubricTable"></table></div>
+      <div class="field" style="margin-top:12px">
+        <label class="label" for="guide">AI에게 주는 추가 채점 지침</label>
+        <textarea id="guide" rows="8"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header>
+      <div><h2>팀 과제 올리기</h2><div class="meta">팀마다 PPT(.pptx) 또는 PDF 한 개. 여러 파일을 한 번에 올릴 수 있습니다.</div></div>
+      <div class="row">
+        <label class="meta" for="tier">채점 방식</label>
+        <select id="tier" style="width:auto"><option value="default">표준</option><option value="complex">정밀(느림)</option></select>
+        <button id="gradeAll" class="primary">전체 채점</button>
+      </div>
+    </header>
+    <label class="dropzone" id="drop" for="fileInput" style="display:block;cursor:pointer">
+      <b>파일을 끌어다 놓거나 눌러서 선택</b><br>.pptx · .pdf (글자가 없는 스캔 PDF는 이미지로 읽습니다)
+    </label>
+    <input id="fileInput" type="file" accept=".pdf,.pptx" multiple hidden>
+    <p class="notice" style="margin:10px 0 0">발표 영상이 없으므로 ④ 발표력은 슬라이드 구성으로 추정한 등급이 기본입니다. 실제 발표 점수가 있으면 팀 카드에 입력하세요. ⑤ 참여도·협업 태도는 기여도 평가서 점수를 직접 입력합니다. 8자리 학번은 AI에 보내기 전에 지웁니다. 이미지로 읽는 쪽은 그대로 전송되며, 파일은 이 브라우저에만 보관됩니다.</p>
+  </section>
+
+  <section class="panel" id="summaryPanel" hidden>
+    <header>
+      <h2>채점 결과 요약</h2>
+      <div class="row"><button id="exportBtn" class="primary">엑셀로 내보내기</button></div>
+    </header>
+    <div class="scroll"><table id="summaryTable"></table></div>
+    <p class="notice" style="margin:10px 0 0">20점 중 12점 미만(60% 미만)은 강의계획서 피드백 기준(보고서 재작성)의 참고 표시입니다. 참여도를 입력하지 않은 팀은 입력된 영역만 합산합니다.</p>
+  </section>
+
+  <div id="teams" style="display:flex;flex-direction:column;gap:16px"></div>
+  <div id="emptyMsg" class="empty panel">아직 올린 팀이 없습니다. 위에서 발표자료를 올리면 팀 카드가 만들어집니다.</div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+'use strict';
+const LEVELS=['매우 우수','우수','보통','미흡','매우 미흡'];
+const DEFAULT_RUBRIC={
+  pct:[100,80,60,40,20],
+  criteria:[
+   {id:1,name:'문제 정의 및 분석',max:4,ai:true,desc:['문제를 명확히 정의하고, 논리적 구조화(5Why, 로직트리 등)가 체계적으로 이루어짐','문제 정의와 분석이 대체로 적절함','분석이 다소 단순함','문제 정의가 모호함','문제 분석이 거의 없음']},
+   {id:2,name:'사고기법 활용 및 해결안 도출',max:4,ai:true,desc:['2가지 이상 사고기법을 적절히 활용하여 창의적이고 현실성 있는 해결안 제시','사고기법 활용이 비교적 적절함','기법 적용이 형식적임','기법 활용이 부족함','사고기법 적용 없음']},
+   {id:3,name:'실행 가능성 및 논리성',max:4,ai:true,desc:['해결안이 구체적이고 실행 가능성이 높으며 논리적으로 타당함','실행 가능성이 비교적 적절함','실행계획이 다소 추상적임','실행계획이 모호함','실행 가능성 제시 없음']},
+   {id:4,name:'발표력 및 전달력',max:4,ai:true,est:true,desc:['발표가 명확하고 논리적이며 팀원 간 역할 분담이 균형적임','발표가 비교적 명확함','전달력이 다소 부족함','발표 준비가 미흡함','발표가 거의 이루어지지 않음']},
+   {id:5,name:'참여도 및 협업 태도',max:4,ai:false,desc:['적극적으로 참여하며 협력적 태도와 책임감을 보임','전반적으로 참여함','참여가 다소 수동적임','참여도가 낮음','참여가 거의 없음']}
+  ],
+  guide:[
+   '- 슬라이드의 문장·표·도식에 실제로 적힌 내용만 근거로 판단하고, 없는 내용은 추측하지 않는다.',
+   '- 5Why는 각 Why가 앞 단계의 답을 이어받는 인과 연쇄일 때 높게 본다. 단계가 병렬 나열이거나 질문만 있고 답이 없으면 "분석이 다소 단순함" 이하로 본다.',
+   '- 로직트리는 상위 문제가 누락·중복 없이 하위 원인으로 나뉘고 근거가 붙어 있을 때 체계적이라 본다. 로직트리가 없으면 ①의 "매우 우수"는 줄 수 없다.',
+   '- SCAMPER 등 창의기법은 기법 이름만 있고 해결안과 연결되지 않으면 "형식적"으로 본다. 서로 다른 기법이 2가지 이상 쓰였는지 센다.',
+   '- 비판적 검토(악마의 주장법)는 해결안별 예상 반론과 그에 대한 보완이 함께 있을 때 충족으로 본다.',
+   '- 실행안은 대상, 방법, 주체나 시기, 평가지표가 있으면 구체적이라 본다.',
+   '- 통계 수치와 출처가 있으면 문제 분석의 근거로 반영한다. 출처 없는 수치는 약한 근거로 본다.',
+   '- ④ 발표력은 발표 영상이 없으므로 슬라이드의 구성 흐름, 가독성, 핵심 전달력, 역할 분담 표시로만 추정한다.'
+  ].join('\n')
+};
+const REQUIRED=[['five_why','문제 정의(5Why)'],['logic_tree','로직트리 분석'],['creative_techniques','창의적 해결안(SCAMPER 등)'],['devils_advocate','비판적 검토(악마의 주장법)'],['final_plan','최종 실행안']];
+
+let rubric=load('fsps-rubric-v1',null)||clone(DEFAULT_RUBRIC);
+let teams=load('fsps-teams-v1',[]).map(t=>Object.assign(t,{busy:false,ctl:null}));
+const blobs={}; // 팀 id -> 이미지로 읽을 쪽 {pageNo: Blob}
+let sampleFn=null, limits=null, downloads=null;
+
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function saveTeams(){save('fsps-teams-v1',teams.map(t=>{const c=Object.assign({},t);delete c.busy;delete c.ctl;return c}))}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,3200)}
+const fmt=n=>(Math.round(n*10)/10).toFixed(1);
+
+/* ---------- 채점 기준 UI ---------- */
+function renderRubric(){
+  $('#rubricSummary').innerHTML=rubric.criteria.map(c=>`<span class="chip neutral">${c.id}. ${esc(c.name)} ${c.max}점</span>`).join('')+'<span class="chip neutral">합계 20점</span>';
+  $('#pctInputs').innerHTML=LEVELS.map((L,i)=>`<label class="row" style="gap:4px">${L}<input type="number" min="0" max="100" data-pct="${i}" value="${rubric.pct[i]}" aria-label="${L} 점수 비율"></label>`).join('');
+  const head='<tr><th>영역</th>'+LEVELS.map((L,i)=>`<th>${L}<div class="meta">${rubric.pct[i]}%</div></th>`).join('')+'</tr>';
+  const rows=rubric.criteria.map(c=>`<tr><th scope="row">${c.id}. ${esc(c.name)}<div class="meta">${c.max}점${c.ai?'':' · 직접 입력'}</div></th>`+c.desc.map((d,i)=>`<td><textarea data-c="${c.id}" data-i="${i}" aria-label="${esc(c.name)} ${LEVELS[i]}">${esc(d)}</textarea></td>`).join('')+'</tr>').join('');
+  $('#rubricTable').innerHTML=head+rows;
+  $('#guide').value=rubric.guide;
+}
+$('#rubricToggle').onclick=()=>{const b=$('#rubricBody');b.hidden=!b.hidden;$('#rubricToggle').setAttribute('aria-expanded',String(!b.hidden))};
+$('#rubricBody').addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.pct!=null){rubric.pct[+t.dataset.pct]=Math.max(0,Math.min(100,+t.value||0))}
+  else if(t.dataset.c){rubric.criteria.find(c=>c.id==t.dataset.c).desc[+t.dataset.i]=t.value}
+  else if(t.id==='guide'){rubric.guide=t.value}
+  save('fsps-rubric-v1',rubric);
+  renderSummary();teams.forEach(renderResult);
+});
+$('#rubricReset').onclick=()=>{rubric=clone(DEFAULT_RUBRIC);save('fsps-rubric-v1',rubric);renderRubric();renderSummary();teams.forEach(renderResult);toast('기본 루브릭으로 되돌렸습니다')};
+
+/* ---------- 점수 계산 ---------- */
+function critScore(t,c){ // {level idx|null, score|null, source}
+  const ov=t.overrides&&t.overrides[c.id];
+  if(c.id===5){const p=t.participation;return p==null||p===''?{idx:null,score:null,src:'none'}:{idx:null,score:Math.min(c.max,Math.max(0,+p)),src:'manual'}}
+  if(c.id===4&&t.presentation!=null&&t.presentation!==''){return {idx:null,score:Math.min(c.max,Math.max(0,+t.presentation)),src:'manual'}}
+  if(ov!=null)return {idx:ov,score:c.max*rubric.pct[ov]/100,src:'override'};
+  const r=t.result&&t.result.criteria&&t.result.criteria.find(x=>+x.id===c.id);
+  const idx=r?levelIndex(r.level):-1;
+  if(idx<0)return {idx:null,score:null,src:'none'};
+  return {idx,score:c.max*rubric.pct[idx]/100,src:'ai'};
+}
+function levelIndex(s){const k=String(s||'').replace(/\s/g,'');return LEVELS.findIndex(L=>L.replace(/\s/g,'')===k)}
+function totals(t){
+  let sum=0,poss=0;
+  rubric.criteria.forEach(c=>{const s=critScore(t,c);if(s.score!=null){sum+=s.score;poss+=c.max}});
+  return {sum,poss};
+}
+
+/* ---------- 파일 읽기 ---------- */
+async function extractPptx(file,onProg){
+  const zip=await JSZip.loadAsync(await file.arrayBuffer());
+  let names=Object.keys(zip.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/.test(n));
+  try{
+    const pres=await zip.file('ppt/presentation.xml').async('string');
+    const rels=new DOMParser().parseFromString(await zip.file('ppt/_rels/presentation.xml.rels').async('string'),'application/xml');
+    const map={};rels.querySelectorAll('Relationship').forEach(r=>map[r.getAttribute('Id')]=r.getAttribute('Target'));
+    const ordered=[...pres.matchAll(/<p:sldId\b[^>]*\br:id="([^"]+)"/g)].map(m=>{let t=map[m[1]]||'';t=t.replace(/^\/?(ppt\/)?/,'');return 'ppt/'+t}).filter(n=>zip.file(n));
+    if(ordered.length)names=ordered;
+  }catch(e){names.sort((a,b)=>parseInt(a.match(/(\d+)\.xml/)[1])-parseInt(b.match(/(\d+)\.xml/)[1]))}
+  const pages=[];let pics=0;
+  for(let i=0;i<names.length;i++){
+    const xml=await zip.file(names[i]).async('string');
+    const doc=new DOMParser().parseFromString(xml,'application/xml');
+    const paras=[...doc.getElementsByTagName('a:p')].map(p=>[...p.getElementsByTagName('a:t')].map(x=>x.textContent).join('')).map(s=>s.trim()).filter(Boolean);
+    pics+=doc.getElementsByTagName('p:pic').length;
+    pages.push({n:i+1,text:paras.join('\n'),src:'text'});
+    onProg&&onProg(i+1,names.length);
+  }
+  return {kind:'PPTX',pages,pics};
+}
+async function extractPdf(file,id,onProg){
+  const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer(),useSystemFonts:true}).promise;
+  const pages=[];blobs[id]={};
+  for(let i=1;i<=doc.numPages;i++){
+    const page=await doc.getPage(i);
+    const tc=await page.getTextContent();
+    let text='';tc.items.forEach(it=>{text+=it.str+(it.hasEOL?'\n':' ')});
+    text=text.replace(/[ \t]+\n/g,'\n').trim();
+    const p={n:i,text,src:'text'};
+    if(text.replace(/\s/g,'').length<30){
+      p.src='needsVision';
+      const vp=page.getViewport({scale:1});const sc=Math.min(2.5,1400/vp.width);
+      const v=page.getViewport({scale:sc});
+      const cv=document.createElement('canvas');cv.width=Math.floor(v.width);cv.height=Math.floor(v.height);
+      const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);
+      await page.render({canvasContext:ctx,viewport:v}).promise;
+      blobs[id][i]=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.78));
+    }
+    pages.push(p);onProg&&onProg(i,doc.numPages);
+  }
+  return {kind:'PDF',pages,pics:0};
+}
+function guessName(fn){return fn.replace(/\.(pptx|pdf)$/i,'').replace(/^\s*\d+[.\-_\s]+/,'').replace(/_+/g,' ').trim()||fn}
+async function addFile(file){
+  if(!/\.(pptx|pdf)$/i.test(file.name)){toast(file.name+': pptx 또는 pdf만 올릴 수 있습니다 (.ppt는 pptx로 저장해 주세요)');return}
+  const t={id:'t'+Date.now()+Math.random().toString(36).slice(2,6),name:guessName(file.name),fileName:file.name,kind:'',pages:[],participation:null,presentation:null,overrides:{},result:null,status:'파일 읽는 중…',err:false,busy:true};
+  teams.push(t);renderTeams();
+  try{
+    const prog=(i,n)=>setStatus(t,`파일 읽는 중… ${i}/${n}쪽`);
+    const r=/\.pptx$/i.test(file.name)?await extractPptx(file,prog):await extractPdf(file,t.id,prog);
+    t.kind=r.kind;t.pages=r.pages;
+    const vis=r.pages.filter(p=>p.src==='needsVision').length;
+    const empty=r.pages.filter(p=>p.src==='text'&&!p.text).length;
+    t.status=`${r.kind} ${r.pages.length}${r.kind==='PPTX'?'장':'쪽'} 읽음`+(vis?` · 글자 없는 ${vis}쪽은 이미지로 읽음`:'')+(empty?` · 글자 없는 슬라이드 ${empty}장(그림만 있을 수 있음)`:'');
+  }catch(e){t.err=true;t.status='파일을 읽지 못했습니다: '+(e&&e.message||e)}
+  t.busy=false;saveTeams();renderTeams();
+}
+function setStatus(t,s,err){t.status=s;t.err=!!err;const el=document.querySelector(`[data-team="${t.id}"] .status`);if(el){el.textContent=s;el.classList.toggle('err',!!err)}}
+
+/* ---------- AI 채점 ---------- */
+const redact=s=>String(s).replace(/\b\d{8}\b/g,'[학번]');
+function deckText(t){
+  return t.pages.map(p=>`[${t.kind==='PPTX'?'슬라이드':'쪽'} ${p.n}]\n`+(redact(p.text)||'(글자 없음)')).join('\n\n').slice(0,90000);
+}
+function buildPrompt(t){
+  const crit=rubric.criteria.filter(c=>c.ai).map(c=>`${c.id}. ${c.name} (${c.max}점)${c.est?' ※슬라이드 기반 추정':''}\n`+LEVELS.map((L,i)=>`   - ${L}: ${c.desc[i]}`).join('\n')).join('\n');
+  return `당신은 간호학과 1학년 교양·전공선택 과목 "미래사회와 문제해결능력"의 팀 프로젝트 보고서를 루브릭으로 채점하는 보조 평가자입니다. 교수가 최종 확정하므로, 근거가 분명한 초안 채점을 합니다.
+
+[과제] 팀별로 미래사회 실제 문제를 선정하고 창의적·논리적·비판적 사고기법으로 해결방안을 도출한다.
+[필수 포함 요소] 문제 정의(5Why 활용) / 로직트리 분석 / 창의적 해결안 도출(SCAMPER 등) / 비판적 검토(악마의 주장법) / 최종 실행안 제시
+[결과물] PPT 발표(10~15분), 보고서 5~7쪽
+
+[루브릭: 5단계 등급 중 하나를 고른다]
+${crit}
+(⑤ 참여도 및 협업 태도는 기여도 평가서로 교수가 따로 입력하므로 채점하지 않는다.)
+
+[채점 지침]
+${rubric.guide}
+- 등급은 위 문구에 가장 가까운 것 하나만 고른다. 중간값은 없다. 근거 없이 후하게 주지 않는다.
+- 근거(evidence)는 자료에 실제로 있는 표현을 짧게(60자 이내) 인용하고 쪽 번호를 붙인다.
+
+[제출 자료: ${t.fileName} / ${t.kind} ${t.pages.length}${t.kind==='PPTX'?'장':'쪽'}]
+${deckText(t)}
+
+[출력] 설명 없이 아래 형식의 JSON 한 개만 출력한다. 모든 문장은 한국어.
+{"topic":"팀이 다룬 문제를 한 줄로",
+ "criteria":[{"id":1,"level":"매우 우수|우수|보통|미흡|매우 미흡","evidence":["5쪽: ...","..."],"feedback":"학생에게 줄 개선 제안 1~2문장"},{"id":2,...},{"id":3,...},{"id":4,...}],
+ "checklist":{"five_why":{"status":"충족|부분|없음","note":"짧은 근거"},"logic_tree":{"status":"","note":""},"creative_techniques":{"status":"","note":"","techniques":["Eliminate","Reverse"]},"devils_advocate":{"status":"","note":""},"final_plan":{"status":"","note":""}},
+ "strengths":["잘한 점 2~3개"],
+ "overall":"3~4문장 종합 평가",
+ "concerns":["읽지 못한 쪽, 자료 부족 등 채점 신뢰도에 영향을 주는 사항. 없으면 빈 배열"],
+ "confidence":"높음|보통|낮음"}`;
+}
+async function ensureRuntime(){
+  if(sampleFn)return true;
+  if(!window.claude||!claude.use){return false}
+  sampleFn=await claude.use('sample');
+  downloads=await claude.use('downloads').catch(()=>null);
+  if(sampleFn){limits=await sampleFn.limits().catch(()=>null)}
+  return !!sampleFn;
+}
+async function transcribe(t,ctl){
+  const need=t.pages.filter(p=>p.src==='needsVision');
+  if(!need.length)return;
+  if(!limits||!limits.images)throw {code:'noimg',message:'이 보기 환경에서는 이미지를 AI에 보낼 수 없어 글자 없는 쪽을 읽지 못합니다'};
+  const b=blobs[t.id]||{};
+  if(need.some(p=>!b[p.n]))throw {code:'noimg',message:'이미지로 읽을 쪽의 원본이 없습니다. 파일을 다시 올려 주세요'};
+  const size=Math.max(1,Math.min(4,limits.images.maxCount||4));
+  for(let i=0;i<need.length;i+=size){
+    const grp=need.slice(i,i+size);
+    setStatus(t,`이미지 쪽 읽는 중… ${Math.min(i+size,need.length)}/${need.length}쪽`);
+    const prompt=`다음 이미지는 대학생 팀 프로젝트 발표자료의 ${grp.map(p=>p.n+'쪽').join(', ')}입니다(이미지 순서와 같음). 각 쪽에 적힌 글자를 빠짐없이 그대로 옮기고, 도표·도식(로직트리, 5Why 단계, 표 등)은 줄 앞에 [도식]을 붙여 구조(상하위 관계, 화살표 방향)를 한두 줄로 설명하세요. 8자리 학번은 [학번]으로 바꾸세요. JSON 배열 하나만 출력: [{"page":번호,"text":"..."}]`;
+    const res=await sampleFn.json(prompt,{images:grp.map(p=>b[p.n]),modelTier:'quick',signal:ctl.signal});
+    (Array.isArray(res)?res:[]).forEach(r=>{const p=grp.find(x=>x.n===+r.page);if(p&&r.text){p.text=String(r.text);p.src='vision'}});
+  }
+  need.forEach(p=>{if(p.src==='needsVision'){p.src='unreadable'}});
+}
+const ERR={not_granted:'Claude 사용 허용이 필요합니다. 허용 창에서 "허용"을 눌러 다시 시도하세요.',rate_limited:'요청이 많거나 사용 한도에 도달했습니다. 잠시 뒤 다시 시도하세요.',prompt_too_large:'자료가 너무 깁니다. 쪽 수를 줄여 다시 올려 주세요.',invalid_json:'AI 응답을 해석하지 못했습니다. 다시 채점해 주세요.',upstream_error:'일시적인 연결 오류입니다. 다시 시도하세요.',image_rejected:'이미지를 처리하지 못했습니다.',refused:'AI가 이 입력의 처리를 거절했습니다.',sampling_disabled:'이 계정에서는 Claude를 사용할 수 없습니다.'};
+async function gradeTeam(t){
+  if(t.busy||!t.pages.length)return;
+  if(!(await ensureRuntime())){setStatus(t,'Claude 채점은 claude.ai에서 이 페이지를 열었을 때만 동작합니다.',true);renderTeams();return}
+  t.busy=true;t.ctl=new AbortController();renderTeams();
+  try{
+    await transcribe(t,t.ctl);
+    setStatus(t,'루브릭 기준으로 채점 중… (30초~2분)');
+    const res=await sampleFn.json(buildPrompt(t),{modelTier:$('#tier').value,signal:t.ctl.signal,
+      onText:({text})=>setStatus(t,`루브릭 기준으로 채점 중… (${text.length.toLocaleString()}자 작성)`)});
+    if(!res||!Array.isArray(res.criteria))throw {code:'invalid_json',message:'형식 오류'};
+    t.result=res;t.overrides={};
+    const un=t.pages.filter(p=>p.src==='unreadable').length;
+    if(un){t.result.concerns=(t.result.concerns||[]).concat(`${un}쪽은 글자를 읽지 못해 채점에서 빠졌습니다.`)}
+    t.err=false;t.status='채점 완료 · '+new Date().toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    if(e&&e.code==='cancelled'){t.status='채점을 중지했습니다.';t.err=false}
+    else{t.err=true;t.status=(ERR[e&&e.code]||(e&&e.message)||'채점 중 오류가 발생했습니다.')}
+  }
+  t.busy=false;t.ctl=null;saveTeams();renderTeams();
+}
+
+/* ---------- 화면 ---------- */
+function chipFor(idx){return idx==null?'neutral':idx<=1?'good':idx===2?'mid':'bad'}
+function statusChip(s){return s==='충족'?'good':s==='부분'?'mid':'bad'}
+function renderTeams(){
+  const box=$('#teams');
+  $('#emptyMsg').hidden=teams.length>0;
+  const keep=new Set(teams.map(t=>t.id));
+  [...box.children].forEach(el=>{if(!keep.has(el.dataset.team))el.remove()});
+  teams.forEach((t,i)=>{
+    let el=box.querySelector(`[data-team="${t.id}"]`);
+    if(!el){el=document.createElement('section');el.className='panel team';el.dataset.team=t.id;box.appendChild(el);buildCard(el,t)}
+    const btn=el.querySelector('.grade');btn.textContent=t.busy?'채점 중지':(t.result?'다시 채점':'채점');btn.disabled=!t.busy&&!t.pages.length;
+    btn.classList.toggle('primary',!t.result||t.busy);
+    el.querySelector('.status').textContent=t.status||'';el.querySelector('.status').classList.toggle('err',!!t.err);
+    el.querySelector('.rm').disabled=t.busy&&!t.ctl;
+    renderResult(t);
+  });
+  renderSummary();
+}
+function buildCard(el,t){
+  el.innerHTML=`<div class="team-top">
+    <div class="field"><label class="label" for="n-${t.id}">팀 이름</label><input type="text" id="n-${t.id}" class="in-name" value="${esc(t.name)}">
+      <div class="meta">${esc(t.fileName)}</div></div>
+    <div class="field"><label class="label" for="pt-${t.id}">⑤ 참여도·협업(0~4점, 기여도 평가서)</label><input type="number" id="pt-${t.id}" class="in-part" min="0" max="4" step="0.1" placeholder="미입력" value="${t.participation==null?'':t.participation}"></div>
+    <div class="field"><label class="label" for="pr-${t.id}">④ 실제 발표 점수(0~4점, 선택)</label><input type="number" id="pr-${t.id}" class="in-pres" min="0" max="4" step="0.1" placeholder="비우면 AI 추정" value="${t.presentation==null?'':t.presentation}"></div>
+  </div>
+  <div class="row" style="justify-content:space-between"><span class="status" role="status"></span>
+    <span class="row"><button class="grade">채점</button><button class="rm ghost danger">삭제</button></span></div>
+  <div class="res"></div>`;
+  const q=s=>el.querySelector(s);
+  q('.in-name').oninput=e=>{t.name=e.target.value;saveTeams();renderSummary()};
+  q('.in-part').oninput=e=>{t.participation=e.target.value===''?null:+e.target.value;saveTeams();renderResult(t);renderSummary()};
+  q('.in-pres').oninput=e=>{t.presentation=e.target.value===''?null:+e.target.value;saveTeams();renderResult(t);renderSummary()};
+  q('.grade').onclick=()=>{t.busy?t.ctl&&t.ctl.abort():gradeTeam(t)};
+  q('.rm').onclick=()=>{teams=teams.filter(x=>x!==t);delete blobs[t.id];saveTeams();renderTeams()};
+}
+function renderResult(t){
+  const el=document.querySelector(`[data-team="${t.id}"] .res`);if(!el)return;
+  const r=t.result;
+  if(!r){el.innerHTML=t.pages.length?'':'';return}
+  const {sum,poss}=totals(t);
+  const rows=rubric.criteria.map(c=>{
+    const s=critScore(t,c);const rc=r.criteria.find(x=>+x.id===c.id);
+    let lv,fb='';
+    if(c.id===5){
+      lv=s.score==null?'<span class="chip neutral">미입력</span>':`<span class="chip neutral">기여도 평가서</span>`;
+      fb=s.score==null?'<span class="meta">위의 ⑤ 입력칸에 기여도 평가서 점수를 넣으면 합계에 반영됩니다.</span>':'<span class="meta">교수님이 입력한 점수입니다.</span>';
+    }else{
+      const idx=s.idx;
+      const manual=s.src==='manual';
+      lv=manual?`<span class="chip neutral">직접 입력</span>`:`<select class="ov" data-c="${c.id}" aria-label="${esc(c.name)} 등급">${LEVELS.map((L,i)=>`<option value="${i}"${i===idx?' selected':''}>${L}</option>`).join('')}</select>`
+        +(s.src==='override'?'<div class="meta">수정함</div>':'')+(c.est&&!manual?'<div class="meta">슬라이드 기반 추정</div>':'');
+      if(rc){fb=(rc.evidence&&rc.evidence.length?`<ul class="ev">${rc.evidence.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'')+(rc.feedback?`<p class="fb">${esc(rc.feedback)}</p>`:'')}
+    }
+    const cls=s.idx!=null?chipFor(s.idx):'';
+    return `<tr><th scope="row">${c.id}. ${esc(c.name)}</th><td>${lv}</td><td class="num">${s.score==null?'-':fmt(s.score)} / ${c.max}</td><td>${fb}</td></tr>`;
+  }).join('');
+  const cl=r.checklist||{};
+  const checks=REQUIRED.map(([k,n])=>{const v=cl[k]||{};const st=v.status||'없음';
+    const extra=k==='creative_techniques'&&v.techniques&&v.techniques.length?` · ${v.techniques.length}가지(${v.techniques.map(esc).join(', ')})`:'';
+    return `<div class="check"><div class="row" style="justify-content:space-between;gap:6px"><b style="font-weight:500">${n}</b><span class="chip ${statusChip(st)}">${esc(st)}</span></div><div class="note">${esc(v.note||'')}${extra}</div></div>`}).join('');
+  const low=poss&&sum/poss<0.6;
+  const conf=r.confidence||'';
+  el.innerHTML=`<div class="score-head"><span class="big">${fmt(sum)}</span><span class="meta">/ ${poss}점${poss<20?` (미입력 영역 제외, 만점 20점 중 ${poss}점 분)`:''}</span>
+      <div class="bar" aria-hidden="true"><i style="width:${poss?Math.round(sum/poss*100):0}%"></i></div>
+      ${low?'<span class="chip bad">재작성 검토</span>':''}${conf?`<span class="chip neutral">AI 판단 신뢰도 ${esc(conf)}</span>`:''}</div>
+    ${r.topic?`<div class="meta">다룬 문제: ${esc(r.topic)}</div>`:''}
+    <div class="scroll"><table><thead><tr><th>영역</th><th>등급</th><th class="num">점수</th><th>근거와 피드백</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div><div class="label" style="margin-bottom:6px">필수 포함 요소</div><div class="checks">${checks}</div></div>
+    ${r.overall?`<div class="comment"><b style="font-weight:500">종합 평가</b><br>${esc(r.overall)}${r.strengths&&r.strengths.length?`<br><span class="meta">잘한 점: ${r.strengths.map(esc).join(' / ')}</span>`:''}</div>`:''}
+    ${r.concerns&&r.concerns.length?`<div class="warn">확인 필요: ${r.concerns.map(esc).join(' · ')}</div>`:''}`;
+  el.querySelectorAll('.ov').forEach(s=>s.onchange=()=>{t.overrides=t.overrides||{};t.overrides[s.dataset.c]=+s.value;saveTeams();renderResult(t);renderSummary()});
+}
+function renderSummary(){
+  const graded=teams.filter(t=>t.result);
+  $('#summaryPanel').hidden=!graded.length;
+  if(!graded.length)return;
+  const head='<thead><tr><th>팀</th>'+rubric.criteria.map(c=>`<th class="num">${c.id}. ${esc(c.name)}<div class="meta">/${c.max}</div></th>`).join('')+'<th class="num">합계</th><th>비고</th></tr></thead>';
+  const body=graded.map(t=>{
+    const {sum,poss}=totals(t);
+    const cells=rubric.criteria.map(c=>{const s=critScore(t,c);return `<td class="num">${s.score==null?'-':fmt(s.score)}</td>`}).join('');
+    const notes=[];if(poss<20)notes.push('참여도 미입력');if(poss&&sum/poss<0.6)notes.push('재작성 검토');
+    return `<tr><th scope="row">${esc(t.name)}</th>${cells}<td class="num"><b>${fmt(sum)}</b> / ${poss}</td><td>${notes.join(' · ')}</td></tr>`}).join('');
+  $('#summaryTable').innerHTML=head+'<tbody>'+body+'</tbody>';
+}
+
+/* ---------- 내보내기 ---------- */
+$('#exportBtn').onclick=async()=>{
+  if(!window.XLSX){toast('엑셀 라이브러리를 불러오지 못했습니다');return}
+  const graded=teams.filter(t=>t.result);
+  const sum=[['팀',...rubric.criteria.map(c=>`${c.id}. ${c.name}(${c.max})`),'합계','만점 기준','비고']];
+  const det=[['팀','영역','등급','점수','만점','출처','근거','피드백']];
+  const chk=[['팀',...REQUIRED.map(r=>r[1]),'종합 평가','확인 필요']];
+  graded.forEach(t=>{
+    const {sum:s,poss}=totals(t);const r=t.result;
+    sum.push([t.name,...rubric.criteria.map(c=>{const x=critScore(t,c);return x.score==null?'':Math.round(x.score*10)/10}),Math.round(s*10)/10,poss,[poss<20?'참여도 미입력':'',poss&&s/poss<0.6?'재작성 검토':''].filter(Boolean).join(', ')]);
+    rubric.criteria.forEach(c=>{
+      const x=critScore(t,c);const rc=(r.criteria||[]).find(y=>+y.id===c.id)||{};
+      det.push([t.name,c.name,x.idx!=null?LEVELS[x.idx]:(x.src==='manual'?'직접 입력':''),x.score==null?'':Math.round(x.score*10)/10,c.max,{ai:c.est?'AI(슬라이드 추정)':'AI',override:'교수 수정',manual:'교수 입력',none:''}[x.src],(rc.evidence||[]).join('\n'),rc.feedback||'']);
+    });
+    const cl=r.checklist||{};
+    chk.push([t.name,...REQUIRED.map(([k])=>{const v=cl[k]||{};return `${v.status||''} ${v.note||''}`.trim()}),r.overall||'',(r.concerns||[]).join(' / ')]);
+  });
+  const wb=XLSX.utils.book_new();
+  [['성적 요약',sum],['영역별 상세',det],['필수요소 점검',chk]].forEach(([n,a])=>{const ws=XLSX.utils.aoa_to_sheet(a);ws['!cols']=a[0].map((_,i)=>({wch:i===0?18:(a===det&&i>=6?48:16)}));XLSX.utils.book_append_sheet(wb,ws,n)});
+  const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  if(!(await ensureRuntime())||!downloads){toast('이 보기 환경에서는 파일 저장을 쓸 수 없습니다');return}
+  try{await downloads.save({filename:'미래사회문제해결_프로젝트_채점결과.xlsx',data:buf});toast('저장했습니다')}
+  catch(e){if(!e||e.code!=='declined')toast('저장하지 못했습니다')}
+};
+
+/* ---------- 입력 ---------- */
+$('#gradeAll').onclick=async()=>{
+  const todo=teams.filter(t=>!t.busy&&t.pages.length&&!t.result);
+  const list=todo.length?todo:teams.filter(t=>!t.busy&&t.pages.length);
+  if(!list.length){toast('채점할 팀이 없습니다');return}
+  $('#gradeAll').disabled=true;
+  for(const t of list){await gradeTeam(t);if(t.err&&/허용|한도/.test(t.status))break}
+  $('#gradeAll').disabled=false;
+};
+const drop=$('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',async e=>{for(const f of e.dataTransfer.files)await addFile(f)});
+$('#fileInput').onchange=async e=>{const fs=[...e.target.files];e.target.value='';for(const f of fs)await addFile(f)};
+
+if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}
+renderRubric();renderTeams();
+teams.forEach(t=>{if(t.status&&/읽는 중/.test(t.status)){t.status='파일 읽기가 중단되었습니다. 다시 올려 주세요.';t.err=true}});
+renderTeams();
+})();
+</script>
