@@ -75,7 +75,7 @@
     if (!res.ok) {
       var j = {};
       try { j = await res.json(); } catch (e) {}
-      var map = { 401: 'access_denied', 413: 'prompt_too_large', 429: 'rate_limited' };
+      var map = { 401: 'access_denied', 413: 'prompt_too_large', 429: 'rate_limited', 503: 'not_configured' };
       throw err(map[res.status] || 'upstream_error', j.message || '서버 오류가 발생했습니다.');
     }
     return res;

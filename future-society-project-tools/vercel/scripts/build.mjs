@@ -16,7 +16,7 @@ function swap(html, pairs, name) {
   }
   return html;
 }
-const ERR_DENIED = (msg) => [`const ERR={not_granted:`, `const ERR={access_denied:'${msg}',not_granted:`];
+const ERR_DENIED = (msg, extra = '') => [`const ERR={not_granted:`, `const ERR={access_denied:'${msg}',${extra}not_granted:`];
 
 const wrapPage = (body, mode) => `<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
@@ -47,7 +47,7 @@ chat = swap(chat, [
   ['<li>처음 보내면 Claude 사용 허용 창이 뜹니다. 허용해야 대화할 수 있습니다.</li>', '<li>접속 코드가 필요하면 처음 보낼 때 코드를 묻습니다. 선생님이 알려 준 코드를 입력하세요.</li>'],
   ['<li>질문은 지금 로그인한 본인 Claude 계정의 사용량으로 처리됩니다.</li>', '<li>질문은 서버를 거쳐 AI 서비스로 전송됩니다. 이름, 학번 같은 개인정보는 쓰지 마세요.</li>'],
   ['질문은 사용 중인 본인 Claude 계정으로 처리됩니다.', '질문은 서버를 거쳐 AI 서비스로 전송되니 이름과 학번 같은 개인정보는 쓰지 마세요.'],
-  ERR_DENIED('접속 코드가 맞지 않거나 필요해요. 다시 보내면 코드를 물어봅니다.'),
+  ERR_DENIED('접속 코드가 맞지 않거나 필요해요. 다시 보내면 코드를 물어봅니다.', "not_configured:'서버 설정이 아직 끝나지 않았어요. 선생님에게 알려 주세요.',"),
 ], 'chatbot');
 wr('public/chatbot/index.html', wrapPage(chat, 'chat'));
 
