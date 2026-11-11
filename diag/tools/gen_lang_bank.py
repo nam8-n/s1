@@ -119,7 +119,7 @@ KOR["D"] = passage(
 ENG["A"] = passage(
     "Mina wakes up at seven every morning. She washes her face and eats breakfast. Then she walks to school with her friend, Jisu. They arrive at school at eight thirty. After school, Mina goes to the library to study.",
     [(B, "What time does Mina wake up?", "At seven", ["At five", "At six", "At eight", "At nine"]),
-     (B, "How does Mina go to school?", "She walks", ["By bus", "By bike", "By subway", "By car"]),
+     (B, "How does Mina go to school?", "On foot", ["By bus", "By bike", "By subway", "By car"]),
      (B, "Who goes to school with Mina?", "Her friend", ["Her mother", "Her sister", "Her teacher", "Nobody"]),
      (B, "Where does Mina go after school?", "To the library", ["To the park", "To the mall", "To the gym", "To the cafeteria"]),
      (S, "Which is <u>NOT</u> true?", "Mina arrives at school at nine", ["Mina wakes up at seven", "Mina eats breakfast", "Mina goes to school with Jisu", "Mina studies at the library after school"])]

@@ -1050,7 +1050,7 @@ window.LANG_BANK={
    "q": "How does Mina go to school?",
    "o": [
     "By bike",
-    "She walks",
+    "On foot",
     "By bus",
     "By car",
     "By subway"
