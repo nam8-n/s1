@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>신입생 기초학력 진단평가</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#1d2433;--mut:#5b6577;--pri:#1f3864;--acc:#2f6fdb;--line:#d8dfec;--ok:#1b7f4b}
+@media(prefers-color-scheme:dark){:root{--bg:#10141c;--card:#1a2030;--ink:#e8ecf5;--mut:#9aa6bd;--pri:#9db8f0;--acc:#6ea0ff;--line:#2b3550;--ok:#5fd09a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+header{background:var(--pri);color:#fff;padding:14px 16px}header h1{margin:0;font-size:18px}header a{color:#cfe0ff;font-size:13px;margin-left:12px}
+@media(prefers-color-scheme:dark){header{background:#1a2748}}
+main{max-width:860px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+h2{font-size:18px;margin:0 0 10px;color:var(--pri)}label{display:block;margin:8px 0 2px;font-size:14px;color:var(--mut)}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:16px;background:var(--bg);color:var(--ink)}
+button{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:11px 18px;font-size:16px;cursor:pointer;margin:6px 6px 0 0}
+button.sec{background:transparent;color:var(--acc);border:1px solid var(--acc)}button:disabled{opacity:.5}
+.subj{display:flex;gap:10px;flex-wrap:wrap}.subj button{flex:1;min-width:140px}
+.q{border-top:1px solid var(--line);padding:12px 0}.q:first-child{border:0}.ctx{background:var(--bg);border-left:4px solid var(--acc);padding:8px 12px;margin:6px 0;white-space:pre-line;font-size:15px}
+.opt{display:block;padding:7px 10px;margin:3px 0;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:15px}.opt:has(input:checked){border-color:var(--acc);background:rgba(47,111,219,.12)}.opt input{width:auto;margin-right:8px}
+#bar{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);padding:8px 16px;display:flex;justify-content:space-between;z-index:5;font-weight:bold}
+.bar{height:14px;background:var(--line);border-radius:7px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc)}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:6px 0}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left}th{background:var(--bg)}
+.mut{color:var(--mut);font-size:13px}.hide{display:none}.tag{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:1px 10px;font-size:13px;margin:2px}
+</style></head><body>
+<header><h1>2027학년도 신입생 기초학력 진단평가 <a href="#">응시</a><a href="#admin">센터 관리자</a></h1></header>
+<div id="bar" class="hide"><span id="bt"></span><span id="bp"></span></div>
+<main id="app"></main>
+<script src="data.js"></script><script src="items_math.js"></script><script src="items_lang.js"></script><script src="app.js"></script>
+</body></html>
